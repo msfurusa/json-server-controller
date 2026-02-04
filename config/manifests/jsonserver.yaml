@@ -1,0 +1,22 @@
+apiVersion: example.com/v1
+kind: JsonServer
+metadata:
+  name: app-my-server
+  namespace: default
+spec:
+  replicas: 2
+  image: json-server-local:latest
+  jsonConfig: |-
+    {
+      "people": [
+        { "id": 1, 
+        "name": "Person A" 
+        },
+        { "id": 2, 
+        "name": "Person B" 
+        }
+      ]
+    }
+status:
+  state: Synced
+  message: "Synced succesfully!"

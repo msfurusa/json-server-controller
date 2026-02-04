@@ -1,0 +1,10 @@
+## Append samples of your project ##
+# resources included in this kustomize package
+resources:
+- jsonserver.yaml
+
+# Manual test manifests (ConfigMap/Deployment/Service) for local testing
+- configmap.yaml
+- deployment.yaml
+- service.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

@@ -1,0 +1,7 @@
+apiVersion: example.com/v1
+kind: JsonServer
+metadata:
+  name: app-my-server
+  namespace: default
+spec:
+  image: ttl.sh/json-server-controller-json-server:1h

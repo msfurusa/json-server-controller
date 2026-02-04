@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-my-server
+  namespace: default
+  labels:
+    app: app-my-server
+data:
+  db.json: |-
+    {
+      "people": [
+        { "id": 1, "name": "Person A" },
+        { "id": 2, "name": "Person B" }
+      ]
+    }
