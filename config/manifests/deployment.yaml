@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: seed-db
-          image: json-server-local:latest
+          image: ttl.sh/json-server-controller-json-server-b8edb6d3-2d74-4097-b184-8d8ff82221ea:2h
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
@@ -30,7 +30,7 @@ spec:
       containers:
         - name: json-server
           # Use a public json-server image for quick testing; replace with your preferred image if needed.
-          image: json-server-local:latest
+          image: ttl.sh/json-server-controller-json-server-b8edb6d3-2d74-4097-b184-8d8ff82221ea:2h
           imagePullPolicy: IfNotPresent
           command: ["/usr/local/bin/json-server"]
           args: ["--watch", "/data/db.json", "--host", "0.0.0.0", "--port", "3000"]
