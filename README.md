@@ -121,10 +121,23 @@ kubectl apply -n argocd -f config/gitops/argocd-application.yaml
 
 Argo CD will sync the controller and the JsonServer instance from `config/gitops/`.
 
-> **NOTE**: The GitOps Kustomization pins images to `ttl.sh` (1-hour TTL). Ensure CI has pushed fresh images before syncing.
+**Access the Argo CD UI:**
+
+```sh
+kubectl -n argocd port-forward svc/argocd-server 8080:443
+```
+
+Open https://localhost:8080 and log in with:
+
+```sh
+username: admin
+password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+```
+
+> **NOTE**: The GitOps Kustomization pins images to `ttl.sh`. The TTL is encoded in the tag (e.g., `:1h`, `:2h`), so ensure fresh images are pushed before syncing.
 
 ## CI
-GitHub Actions workflow is defined in [.github/workflows/ci.yml](.github/workflows/ci.yml). It runs tests and builds/pushes the controller and JSON Server images to `ttl.sh` with a 1-hour TTL.
+GitHub Actions workflow is defined in [.github/workflows/ci.yml](.github/workflows/ci.yml). It runs tests and builds/pushes the controller and JSON Server images to `ttl.sh` with short-lived tags (TTL encoded in the tag).
 
 ## Testing (envtest)
 This project uses controller-runtime's envtest for integration tests. The repository includes a Makefile target that installs the control-plane binaries into `./bin/k8s` so tests can run without sudo.
