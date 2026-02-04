@@ -19,8 +19,7 @@ jobs:
           go-version-file: go.mod
       - name: Run tests
         run: |
-          make manifests generate
-          go test ./... -cover
+          make test
 
   build-and-push-controller:
     runs-on: ubuntu-latest
