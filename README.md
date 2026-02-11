@@ -14,8 +14,16 @@ This project provides a JsonServer CRD and controller. Each JsonServer resource 
 - docker version 17.03+.
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
+- cert-manager v1.15+ (required for webhook TLS)
 
 ### To Deploy on a local Kind cluster
+
+**Install cert-manager (required for webhooks):**
+
+```sh
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.4/cert-manager.yaml
+```
+
 **Build the json-server image used by the workload:**
 
 ```sh
@@ -72,6 +80,12 @@ kubectl get jsonserver app-my-server -o jsonpath='{.spec.replicas}'
 - If port-forward fails, try a different local port: `kubectl port-forward -n default svc/app-my-server 3001:3000`.
 
 ### To Deploy on a remote cluster
+**Install cert-manager (required for webhooks):**
+
+```sh
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.4/cert-manager.yaml
+```
+
 **Build and push your image to the location specified by `IMG`:**
 
 ```sh
@@ -169,6 +183,7 @@ This creates a sample JsonServer resource plus the supporting ConfigMap/Deployme
 
 ## Development notes
 - After modifying API types or markers, run `make manifests generate` and re-install CRDs with `make install`.
+- Webhooks are enabled in config/default and require cert-manager to provision the serving certificate. If you use your own certs, update the serving cert secret referenced by [config/default/manager_webhook_patch.yaml](config/default/manager_webhook_patch.yaml).
 
 ### To Uninstall
 **Delete the instances (CRs) from the cluster:**

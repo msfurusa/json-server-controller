@@ -7,8 +7,8 @@ resources:
 
 images:
   - name: controller
-    newName: ttl.sh/json-server-controller-controller-b8edb6d3-2d74-4097-b184-8d8ff82221ea
-    newTag: 2h
+    newName: controller
+    newTag: latest
 
 patchesStrategicMerge:
   - jsonserver-image-patch.yaml
