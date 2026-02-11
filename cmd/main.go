@@ -185,6 +185,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "JsonServer")
 		os.Exit(1)
 	}
+	if err := (&examplev1.JsonServer{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "JsonServer")
+		os.Exit(1)
+	}
 	// +kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

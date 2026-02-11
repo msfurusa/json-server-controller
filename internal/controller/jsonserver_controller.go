@@ -20,7 +20,9 @@ import (
 	"context"
 	"encoding/json"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -92,7 +94,7 @@ func (r *JsonServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	image := js.Spec.Image
 	if image == "" {
-		image = "json-server-local:latest"
+		image = "backplane/json-server"
 	}
 
 	desiredDeploy := appsv1.Deployment{
@@ -107,10 +109,9 @@ func (r *JsonServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 						Name:            "json-server",
 						Image:           image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"/usr/local/bin/json-server"},
-						Args:            []string{"--watch", "/data/db.json", "--host", "0.0.0.0", "--port", "3000"},
+						Args:            []string{"/data/db.json"},
 						Ports:           []corev1.ContainerPort{{ContainerPort: 3000}},
-						VolumeMounts:    []corev1.VolumeMount{{Name: "data", MountPath: "/data/db.json", SubPath: "db.json"}},
+						VolumeMounts:    []corev1.VolumeMount{{Name: "data", MountPath: "/data"}},
 					}},
 					Volumes: []corev1.Volume{{
 						Name: "data",
@@ -128,10 +129,20 @@ func (r *JsonServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Deployment (CreateOrUpdate)
 	deploy := &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, deploy, func() error {
-		deploy.Labels = labels
-		deploy.Spec = desiredDeploy.Spec
-		return controllerutil.SetControllerReference(&js, deploy, r.Scheme)
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(deploy), deploy); err != nil {
+			if apierrors.IsNotFound(err) {
+				deploy = &appsv1.Deployment{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+			} else {
+				return err
+			}
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, r.Client, deploy, func() error {
+			deploy.Labels = labels
+			deploy.Spec = desiredDeploy.Spec
+			return controllerutil.SetControllerReference(&js, deploy, r.Scheme)
+		})
+		return err
 	})
 	if err != nil {
 		logger.Error(err, "failed to create or update deployment")
@@ -149,9 +160,19 @@ func (r *JsonServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	// Service (CreateOrUpdate)
 	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
-	_, err = controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
-		svc.Spec = desiredSvc.Spec
-		return controllerutil.SetControllerReference(&js, svc, r.Scheme)
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		if err := r.Get(ctx, client.ObjectKeyFromObject(svc), svc); err != nil {
+			if apierrors.IsNotFound(err) {
+				svc = &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace}}
+			} else {
+				return err
+			}
+		}
+		_, err := controllerutil.CreateOrUpdate(ctx, r.Client, svc, func() error {
+			svc.Spec = desiredSvc.Spec
+			return controllerutil.SetControllerReference(&js, svc, r.Scheme)
+		})
+		return err
 	})
 	if err != nil {
 		logger.Error(err, "failed to create or update service")
